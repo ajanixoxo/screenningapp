@@ -1874,6 +1874,35 @@ a {
   color: var(--ink);
 }
 
+.btn-download-primary {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 20px rgba(5, 150, 105, 0.25) !important;
+}
+
+.btn-download-primary:hover {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 14px 24px rgba(5, 150, 105, 0.32) !important;
+}
+
+.btn-dialog-close-flat {
+  min-height: 48px;
+  padding: 0 16px;
+  background: transparent;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 13px;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+  transition: all 180ms ease;
+  cursor: pointer;
+}
+
+.btn-dialog-close-flat:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
 /* ==========================================================
    PROFESSIONAL ADMISSION LETTER STYLES (A4 ACCURATE)
    ========================================================== */

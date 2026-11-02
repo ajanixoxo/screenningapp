@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, Printer, X, Award, ExternalLink, Calendar, BookOpen, Hash, Mail, Phone } from "lucide-react";
+import { CheckCircle2, Printer, X, Award, ExternalLink, Calendar, BookOpen, Hash, Mail, Phone, Download } from "lucide-react";
 import AdmissionLetter, { AdmissionOfferData } from "./AdmissionLetter";
 
 interface AdmissionDialogProps {
@@ -17,6 +17,7 @@ export default function AdmissionDialog({
   data,
 }: AdmissionDialogProps) {
   const [showFullLetter, setShowFullLetter] = useState(false);
+  const [autoDownload, setAutoDownload] = useState(false);
 
   // Close on Escape key press
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function AdmissionDialog({
       if (event.key === "Escape") {
         if (showFullLetter) {
           setShowFullLetter(false);
+          setAutoDownload(false);
         } else {
           onClose();
         }
@@ -47,7 +49,11 @@ export default function AdmissionDialog({
       <div className="letter-modal-backdrop" role="dialog" aria-modal="true">
         <AdmissionLetter
           data={data}
-          onClose={() => setShowFullLetter(false)}
+          autoDownload={autoDownload}
+          onClose={() => {
+            setShowFullLetter(false);
+            setAutoDownload(false);
+          }}
         />
       </div>
     );
@@ -197,19 +203,36 @@ export default function AdmissionDialog({
           <div className="dialog-actions">
             <button
               type="button"
-              className="btn-print-letter"
-              onClick={() => setShowFullLetter(true)}
+              className="btn-print-letter btn-download-primary"
+              onClick={() => {
+                setAutoDownload(true);
+                setShowFullLetter(true);
+              }}
+              title="Download all 4 documents as PDF directly to your device"
             >
-              <Printer size={18} />
-              <span>Print All 4 Documents</span>
+              <Download size={18} />
+              <span>Direct Download PDF</span>
             </button>
 
             <button
               type="button"
               className="btn-dialog-secondary"
+              onClick={() => {
+                setAutoDownload(false);
+                setShowFullLetter(true);
+              }}
+              title="View all 4 forms and open print dialog"
+            >
+              <Printer size={18} />
+              <span>View &amp; Print Forms</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn-dialog-close-flat"
               onClick={onClose}
             >
-              <span>Close / Return Home</span>
+              <span>Close</span>
             </button>
           </div>
         </div>

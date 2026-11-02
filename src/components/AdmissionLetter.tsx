@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
-import { Printer, Download, X, ShieldCheck, FileText, CheckCircle2, Award } from "lucide-react";
+import { Printer, Download, X, ShieldCheck, FileText, CheckCircle2, Award, Loader2 } from "lucide-react";
 import type { Sitting } from "@/lib/db";
 
 export interface AdmissionOfferData {
@@ -25,6 +25,7 @@ interface AdmissionLetterProps {
   data: AdmissionOfferData;
   onClose?: () => void;
   standalone?: boolean;
+  autoDownload?: boolean;
 }
 
 export function getFacultyForCourse(course: string): string {
@@ -46,8 +47,11 @@ export default function AdmissionLetter({
   data,
   onClose,
   standalone = false,
+  autoDownload = false,
 }: AdmissionLetterProps) {
   const [activeTab, setActiveTab] = useState<"all" | "letter" | "factsheet" | "acceptance" | "foundation">("all");
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<string>("");
   const letterRef = useRef<HTMLDivElement>(null);
 
   const formattedDate = new Date(data.dateOffered || Date.now()).toLocaleDateString(
@@ -62,6 +66,101 @@ export default function AdmissionLetter({
   const handlePrint = () => {
     window.print();
   };
+
+  const handleDownloadPdf = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    setDownloadProgress("Preparing documents...");
+
+    const originalTab = activeTab;
+
+    try {
+      if (originalTab !== "all") {
+        setActiveTab("all");
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+
+      setDownloadProgress("Loading PDF engine...");
+      const { jsPDF } = await import("jspdf");
+      const html2canvas = (await import("html2canvas")).default;
+
+      if (!letterRef.current) {
+        throw new Error("Document container not ready");
+      }
+
+      const container = letterRef.current;
+      const articles = container.querySelectorAll<HTMLElement>("article.print-doc-page");
+
+      if (articles.length === 0) {
+        throw new Error("No document sheets found to export");
+      }
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+
+      for (let i = 0; i < articles.length; i++) {
+        setDownloadProgress(`Rendering document ${i + 1} of ${articles.length}...`);
+        const article = articles[i];
+
+        const hadHidden = article.classList.contains("screen-hidden");
+        if (hadHidden) article.classList.remove("screen-hidden");
+
+        const canvas = await html2canvas(article, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+          windowWidth: 1024,
+        });
+
+        if (hadHidden) article.classList.add("screen-hidden");
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+        // Fit cleanly within A4 with a 5mm margin
+        const margin = 5;
+        const availW = pdfWidth - margin * 2;
+        const availH = pdfHeight - margin * 2;
+        const ratio = Math.min(availW / canvas.width, availH / canvas.height);
+        const finalW = canvas.width * ratio;
+        const finalH = canvas.height * ratio;
+        const xOffset = (pdfWidth - finalW) / 2;
+        const yOffset = (pdfHeight - finalH) / 2;
+
+        if (i > 0) {
+          pdf.addPage("a4", "portrait");
+        }
+
+        pdf.addImage(imgData, "JPEG", xOffset, yOffset, finalW, finalH);
+      }
+
+      setDownloadProgress("Saving PDF file...");
+      const cleanRef = (data.referenceNumber || "HCT").replace(/[^a-zA-Z0-9-]/g, "_");
+      pdf.save(`HCT_Admission_Package_${cleanRef}.pdf`);
+
+      if (originalTab !== "all") {
+        setActiveTab(originalTab);
+      }
+    } catch (err) {
+      console.error("Direct PDF download error, falling back to print dialog:", err);
+      window.print();
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress("");
+    }
+  };
+
+  useEffect(() => {
+    if (autoDownload) {
+      handleDownloadPdf();
+    }
+  }, [autoDownload]);
 
   const candidateFullName = data.candidateName || `${data.surname} ${data.otherNames}`.trim();
 
@@ -117,24 +216,36 @@ export default function AdmissionLetter({
         </div>
 
         <div className="action-bar-right">
+          {/* DIRECT DOWNLOAD PDF BUTTON */}
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={isDownloading}
+            className="action-btn primary-action font-bold"
+            title="Download complete documentation as PDF directly to your device"
+          >
+            {isDownloading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>{downloadProgress || "Downloading PDF..."}</span>
+              </>
+            ) : (
+              <>
+                <Download size={16} />
+                <span>Direct Download PDF</span>
+              </>
+            )}
+          </button>
+
           {/* SINGLE PRINT BUTTON THAT PRINTS ALL 4 DOCUMENTS */}
           <button
             type="button"
             onClick={handlePrint}
-            className="action-btn primary-action font-bold"
-            title="Print all 4 documents or save as a combined PDF"
+            className="action-btn secondary-action"
+            title="Print all 4 documents or save via print dialog"
           >
             <Printer size={16} />
             <span>Print All (4 Docs)</span>
-          </button>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="action-btn secondary-action"
-            title="Download complete documentation as PDF"
-          >
-            <Download size={16} />
-            <span>Download PDF</span>
           </button>
           {onClose && (
             <button

@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Printer,
+  Download,
   ShieldCheck,
   RefreshCw,
   Lock,
@@ -572,8 +573,8 @@ export default function Home() {
                   onClick={() => setDialogOpen(true)}
                   className="btn-open-offer-dialog"
                 >
-                  <Printer size={15} />
-                  <span>Print 4 Admission Docs</span>
+                  <Download size={15} />
+                  <span>Download / Print 4 Docs</span>
                 </button>
               </div>
             )}
