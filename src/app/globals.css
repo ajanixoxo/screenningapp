@@ -917,14 +917,15 @@ a {
 
 .subjects-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px;
-  gap: 14px;
+  grid-template-columns: 28px minmax(0, 1fr) 140px 44px;
+  gap: 12px;
+  align-items: center;
   padding: 0 8px 12px;
   color: var(--muted);
   border-bottom: 1.5px solid var(--line);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 800;
-  letter-spacing: 1.2px;
+  letter-spacing: 1px;
 }
 
 .subject-list {
@@ -936,9 +937,22 @@ a {
 .subject-row {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px auto;
+  grid-template-columns: 28px minmax(0, 1fr) 140px 44px;
   align-items: center;
   gap: 12px;
+}
+
+.subject-num-badge {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .subject-select,
@@ -1507,15 +1521,22 @@ a {
   }
 
   .subjects-header {
-    grid-template-columns: minmax(0, 1fr) 105px;
-    gap: 10px;
+    grid-template-columns: 24px minmax(0, 1fr) 95px 38px;
+    gap: 8px;
     padding: 0 4px 10px;
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .subject-row {
-    grid-template-columns: minmax(0, 1fr) 105px auto;
+    grid-template-columns: 24px minmax(0, 1fr) 95px 38px;
     gap: 8px;
+  }
+
+  .subject-num-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+    border-radius: 6px;
   }
 
   .subject-row .select-wrap select {

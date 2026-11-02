@@ -17,7 +17,7 @@ const sittingSchema = z.object({
   year: z.string().min(4, "Exam year is required"),
   subjects: z
     .array(subjectGradeSchema)
-    .min(5, "At least 5 subjects are required per sitting")
+    .length(9, "Each O'Level sitting must contain exactly 9 qualifying subjects (no more, no less)")
     .refine(
       (subs) => {
         const names = subs.map((s) => s.subject.trim().toLowerCase()).filter(Boolean);

@@ -91,7 +91,17 @@ function createSitting(id: number): Sitting {
     oLevelRegistrationNumber: "",
     exam: "",
     year: "",
-    subjects: Array.from({ length: 5 }, () => ({ subject: "", grade: "" })),
+    subjects: [
+      { subject: "English Language", grade: "" },
+      { subject: "Mathematics", grade: "" },
+      { subject: "", grade: "" },
+      { subject: "", grade: "" },
+      { subject: "", grade: "" },
+      { subject: "", grade: "" },
+      { subject: "", grade: "" },
+      { subject: "", grade: "" },
+      { subject: "", grade: "" },
+    ],
   };
 }
 
@@ -188,27 +198,14 @@ export default function Home() {
     );
   }
 
-  function addSubject(sittingId: number) {
-    setSittings((current) =>
-      current.map((sitting) =>
-        sitting.id === sittingId && sitting.subjects.length < 9
-          ? {
-              ...sitting,
-              subjects: [...sitting.subjects, { subject: "", grade: "" }],
-            }
-          : sitting,
-      ),
-    );
-  }
-
-  function removeSubject(sittingId: number, subjectIndex: number) {
+  function resetSubject(sittingId: number, subjectIndex: number) {
     setSittings((current) =>
       current.map((sitting) =>
         sitting.id === sittingId
           ? {
               ...sitting,
-              subjects: sitting.subjects.filter(
-                (_, index) => index !== subjectIndex,
+              subjects: sitting.subjects.map((entry, index) =>
+                index === subjectIndex ? { subject: "", grade: "" } : entry,
               ),
             }
           : sitting,
@@ -261,13 +258,20 @@ export default function Home() {
       return;
     }
 
-    // 3. Validate subject completeness
+    // 3. Validate that exactly 9 subjects are provided and filled for each sitting
     for (let i = 0; i < sittings.length; i++) {
       const sit = sittings[i];
-      const incomplete = sit.subjects.some((s) => !s.subject || !s.grade);
+      if (sit.subjects.length !== 9) {
+        setErrorMessage(
+          `Sitting ${i + 1} must contain exactly 9 qualifying subjects (no more, no less).`
+        );
+        window.scrollTo({ top: 350, behavior: "smooth" });
+        return;
+      }
+      const incomplete = sit.subjects.some((s) => !s.subject.trim() || !s.grade.trim());
       if (incomplete) {
         setErrorMessage(
-          `Please select both subject and grade for all entries in Sitting ${i + 1}.`
+          `Please select both subject and grade for all 9 subjects in Sitting ${i + 1}. Exactly 9 subjects are required.`
         );
         window.scrollTo({ top: 350, behavior: "smooth" });
         return;
@@ -806,8 +810,10 @@ export default function Home() {
                       </div>
 
                       <div className="subjects-header">
-                        <span>QUALIFYING SUBJECT</span>
+                        <span style={{ width: "28px", textAlign: "center" }}>#</span>
+                        <span>QUALIFYING SUBJECT (9 REQUIRED)</span>
                         <span>GRADE</span>
+                        <span style={{ textAlign: "center" }}>ACTION</span>
                       </div>
 
                       <div className="subject-list">
@@ -816,6 +822,10 @@ export default function Home() {
                             className="subject-row"
                             key={`${sitting.id}-${subjectIndex}`}
                           >
+                            <span className="subject-num-badge">
+                              {subjectIndex + 1}
+                            </span>
+
                             <label
                               className="visually-hidden"
                               htmlFor={`subject-${sitting.id}-${subjectIndex}`}
@@ -837,7 +847,7 @@ export default function Home() {
                                 required
                               >
                                 <option value="" disabled>
-                                  Choose a subject
+                                  Choose subject {subjectIndex + 1}
                                 </option>
                                 {subjects.map((s) => (
                                   <option key={s} value={s}>
@@ -878,32 +888,20 @@ export default function Home() {
                               </select>
                             </span>
 
-                            {sitting.subjects.length > 5 && (
-                              <button
-                                className="remove-subject"
-                                type="button"
-                                onClick={() =>
-                                  removeSubject(sitting.id, subjectIndex)
-                                }
-                                aria-label={`Remove subject ${subjectIndex + 1}`}
-                              >
-                                <Icon name="trash" size={15} />
-                              </button>
-                            )}
+                            <button
+                              className="remove-subject"
+                              type="button"
+                              onClick={() =>
+                                resetSubject(sitting.id, subjectIndex)
+                              }
+                              title={`Reset subject ${subjectIndex + 1}`}
+                              aria-label={`Reset subject ${subjectIndex + 1}`}
+                            >
+                              <Icon name="trash" size={15} />
+                            </button>
                           </div>
                         ))}
                       </div>
-
-                      {sitting.subjects.length < 9 && (
-                        <button
-                          className="add-subject"
-                          type="button"
-                          onClick={() => addSubject(sitting.id)}
-                        >
-                          <Icon name="plus" size={15} />
-                          Add another subject
-                        </button>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -932,7 +930,7 @@ export default function Home() {
                   </button>
                 )}
                 <p className="results-hint">
-                  You can enter up to 9 subjects for each sitting. Minimum 5 subjects required.
+                  Each sitting must contain exactly 9 qualifying subjects (including English Language and Mathematics). Exactly 9 subjects are required.
                 </p>
               </div>
 
