@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Admissions Screening | Crestfield Polytechnic",
+  title: "Admissions Screening | Highland College of Technology",
   description:
-    "Complete your Crestfield Polytechnic admissions screening application.",
+    "Complete and verify your Highland College of Technology admissions screening application.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
