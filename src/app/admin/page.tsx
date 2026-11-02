@@ -18,6 +18,7 @@ import {
   ArrowUpDown,
   RefreshCw,
   X,
+  Trash2,
 } from "lucide-react";
 import type { StudentSubmission } from "@/lib/db";
 import AdmissionLetter from "@/components/AdmissionLetter";
@@ -45,6 +46,10 @@ export default function AdminPage() {
   // Selected student for detail modal or letter preview
   const [selectedSubmission, setSelectedSubmission] = useState<StudentSubmission | null>(null);
   const [previewLetterFor, setPreviewLetterFor] = useState<StudentSubmission | null>(null);
+
+  // Record deletion state
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
 
   // Check auth status on load
   useEffect(() => {
@@ -202,6 +207,43 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   }
 
+  // Delete student record
+  async function handleDelete(submission: StudentSubmission) {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to permanently delete the admission record for "${submission.surname} ${submission.otherNames}" (Ref: ${submission.referenceNumber})?\n\nThis action cannot be undone.`
+    );
+    if (!confirmDelete) return;
+
+    setDeletingId(submission.id);
+    try {
+      const res = await fetch("/api/admin/submissions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: submission.id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSubmissions((prev) => prev.filter((item) => item.id !== submission.id));
+        if (data.stats) {
+          setStats(data.stats);
+        }
+        if (selectedSubmission?.id === submission.id) {
+          setSelectedSubmission(null);
+        }
+        setDeleteNotice(
+          `Record for ${submission.surname} ${submission.otherNames} (${submission.referenceNumber}) was successfully deleted.`
+        );
+        setTimeout(() => setDeleteNotice(null), 5000);
+      } else {
+        alert(data.error || "Failed to delete student record.");
+      }
+    } catch {
+      alert("Network error occurred while attempting to delete record.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   // 1. Loading State
   if (isAuthenticated === null) {
     return (
@@ -306,6 +348,13 @@ export default function AdminPage() {
 
       {/* Main Container */}
       <main className="admin-body">
+        {deleteNotice && (
+          <div className="admin-delete-notice">
+            <CheckCircle size={18} className="text-emerald-600 shrink-0" />
+            <span>{deleteNotice}</span>
+          </div>
+        )}
+
         {/* KPI Summary Cards */}
         <section className="admin-kpi-grid">
           <div className="kpi-card">
@@ -489,6 +538,16 @@ export default function AdminPage() {
                             <FileText size={14} />
                             <span>4 Documents</span>
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(s)}
+                            disabled={deletingId === s.id}
+                            className="btn-table-action btn-delete-action"
+                            title="Delete Student Record"
+                          >
+                            <Trash2 size={14} />
+                            <span>{deletingId === s.id ? "Deleting..." : "Delete"}</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -599,6 +658,16 @@ export default function AdminPage() {
                 >
                   <FileText size={16} />
                   <span>Preview All 4 Admission Documents</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(selectedSubmission)}
+                  disabled={deletingId === selectedSubmission.id}
+                  className="btn-delete-danger"
+                  title="Delete student admission record"
+                >
+                  <Trash2 size={16} />
+                  <span>{deletingId === selectedSubmission.id ? "Deleting..." : "Delete Record"}</span>
                 </button>
                 <button
                   type="button"

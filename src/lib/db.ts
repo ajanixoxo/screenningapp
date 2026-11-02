@@ -285,3 +285,12 @@ export async function getAdminStats(): Promise<{
     courseBreakdown: byCourse,
   };
 }
+
+export async function deleteSubmission(id: string): Promise<boolean> {
+  await ensureSchema();
+  const res = await db.execute({
+    sql: "DELETE FROM submissions WHERE id = ? OR referenceNumber = ? OR jambNumber = ?",
+    args: [id, id, id],
+  });
+  return Number(res.rowsAffected) > 0;
+}
