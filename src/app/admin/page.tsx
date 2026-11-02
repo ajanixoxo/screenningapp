@@ -242,7 +242,7 @@ export default function AdminPage() {
                   type="password"
                   value={passkeyInput}
                   onChange={(e) => setPasskeyInput(e.target.value)}
-                  placeholder="Enter access key (default: admin2026)"
+                  placeholder="Enter administrative passkey"
                   required
                   autoFocus
                 />

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || "admin2026";
+const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || "HCT-Admin2026-SecureKey!";
 const AUTH_COOKIE_NAME = "hct_admin_session";
 const SESSION_VALUE = "authenticated_hct_admin_session_token_2026";
 

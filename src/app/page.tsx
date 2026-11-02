@@ -204,12 +204,53 @@ export default function Home() {
         sitting.id === sittingId
           ? {
               ...sitting,
-              subjects: sitting.subjects.map((entry, index) =>
-                index === subjectIndex ? { subject: "", grade: "" } : entry,
-              ),
+              subjects: sitting.subjects.map((entry, index) => {
+                if (index !== subjectIndex) return entry;
+                if (index === 0) return { subject: "English Language", grade: "" };
+                if (index === 1) return { subject: "Mathematics", grade: "" };
+                return { subject: "", grade: "" };
+              }),
             }
           : sitting,
       ),
+    );
+  }
+
+  function handleCourseSelect(selectedCourse: string) {
+    setCourse(selectedCourse);
+
+    // Subject preselection rules:
+    // Math & English are compulsory defaults in slots 1 & 2.
+    // Science (Computer-Science): Physics, Chemistry, Biology
+    // Commerce (Accountancy, Business Administration): Financial Accounting, Commerce, Economics
+    // Arts (Mass Communication): Government, Literature in English, Economics
+    let courseDefaults: string[] = [];
+    if (selectedCourse === "Computer-Science") {
+      courseDefaults = ["Physics", "Chemistry", "Biology"];
+    } else if (selectedCourse === "Accountancy" || selectedCourse === "Business Administration") {
+      courseDefaults = ["Financial Accounting", "Commerce", "Economics"];
+    } else if (selectedCourse === "Mass Communication") {
+      courseDefaults = ["Government", "Literature in English", "Economics"];
+    }
+
+    setSittings((current) =>
+      current.map((sit, sitIndex) => {
+        if (sitIndex !== 0) return sit;
+        const newSubjects = [...sit.subjects];
+        newSubjects[0] = { subject: "English Language", grade: newSubjects[0]?.grade || "" };
+        newSubjects[1] = { subject: "Mathematics", grade: newSubjects[1]?.grade || "" };
+
+        courseDefaults.forEach((sub, i) => {
+          const targetIndex = 2 + i;
+          if (targetIndex < newSubjects.length) {
+            newSubjects[targetIndex] = {
+              subject: sub,
+              grade: newSubjects[targetIndex]?.grade || "",
+            };
+          }
+        });
+        return { ...sit, subjects: newSubjects };
+      })
     );
   }
 
@@ -318,6 +359,27 @@ export default function Home() {
       ) {
         setErrorMessage(
           "Sitting 1 and Sitting 2 cannot use the same exam body and registration number."
+        );
+        window.scrollTo({ top: 350, behavior: "smooth" });
+        return;
+      }
+    }
+
+    // 6. Validate Registration Numbers Length Limits
+    const cleanJamb = jambNumber.trim().toUpperCase();
+    if (cleanJamb.length < 10 || cleanJamb.length > 12) {
+      setErrorMessage(
+        "JAMB registration number must be between 10 and 12 characters (e.g. 12345678AB or 2026123456AB)."
+      );
+      window.scrollTo({ top: 350, behavior: "smooth" });
+      return;
+    }
+
+    for (let i = 0; i < sittings.length; i++) {
+      const cleanOLevel = sittings[i].oLevelRegistrationNumber.trim().toUpperCase();
+      if (cleanOLevel.length < 6 || cleanOLevel.length > 12) {
+        setErrorMessage(
+          `Sitting ${i + 1} O'Level registration number must be between 6 and 12 characters (e.g. 10 digits for WAEC/NECO).`
         );
         window.scrollTo({ top: 350, behavior: "smooth" });
         return;
@@ -574,10 +636,18 @@ export default function Home() {
                     <input
                       name="jambNumber"
                       type="text"
+                      maxLength={12}
                       placeholder="e.g. 202612345678AB"
                       autoComplete="off"
                       value={jambNumber}
-                      onChange={(e) => setJambNumber(e.target.value.toUpperCase().trim())}
+                      onChange={(e) =>
+                        setJambNumber(
+                          e.target.value
+                            .toUpperCase()
+                            .replace(/[^A-Z0-9]/g, "")
+                            .slice(0, 12)
+                        )
+                      }
                       required
                     />
                     <small>Enter the official registration number on your JAMB slip.</small>
@@ -672,7 +742,7 @@ export default function Home() {
                       <select
                         name="course"
                         value={course}
-                        onChange={(e) => setCourse(e.target.value)}
+                        onChange={(e) => handleCourseSelect(e.target.value)}
                         required
                       >
                         <option value="" disabled>
@@ -742,12 +812,16 @@ export default function Home() {
                           <input
                             name={`oLevelRegistrationNumber-${sitting.id}`}
                             type="text"
+                            maxLength={12}
                             value={sitting.oLevelRegistrationNumber}
                             onChange={(event) =>
                               updateSitting(
                                 sitting.id,
                                 "oLevelRegistrationNumber",
-                                event.target.value.toUpperCase().trim(),
+                                event.target.value
+                                  .toUpperCase()
+                                  .replace(/[^A-Z0-9]/g, "")
+                                  .slice(0, 12),
                               )
                             }
                             placeholder="e.g. 4251029410"
