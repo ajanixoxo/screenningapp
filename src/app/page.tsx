@@ -152,6 +152,7 @@ export default function Home() {
   const [mobileFormTabOpen, setMobileFormTabOpen] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [duplicateOffer, setDuplicateOffer] = useState<AdmissionOfferData | null>(null);
   const [admissionOffer, setAdmissionOffer] = useState<AdmissionOfferData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -233,15 +234,34 @@ export default function Home() {
   async function handleVerifySubmission(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage("");
+    setDuplicateOffer(null);
 
-    // Validate duplicate subjects
-    const dupWarnings = getSittingDuplicateWarnings();
-    if (dupWarnings.length > 0) {
-      setErrorMessage(dupWarnings.join(" "));
+    // 1. Validate JAMB score
+    const score = Number(jambScore);
+    if (!jambScore || isNaN(score)) {
+      setErrorMessage("Please enter a valid numeric JAMB score.");
+      window.scrollTo({ top: 350, behavior: "smooth" });
+      return;
+    }
+    if (score < 0 || score > 400) {
+      setErrorMessage(
+        score > 400
+          ? "JAMB score cannot exceed 400. The maximum possible UTME score is 400."
+          : "JAMB score cannot be less than 0."
+      );
+      window.scrollTo({ top: 350, behavior: "smooth" });
       return;
     }
 
-    // Validate subject completeness
+    // 2. Validate duplicate subjects within sittings
+    const dupWarnings = getSittingDuplicateWarnings();
+    if (dupWarnings.length > 0) {
+      setErrorMessage(dupWarnings.join(" "));
+      window.scrollTo({ top: 350, behavior: "smooth" });
+      return;
+    }
+
+    // 3. Validate subject completeness
     for (let i = 0; i < sittings.length; i++) {
       const sit = sittings[i];
       const incomplete = sit.subjects.some((s) => !s.subject || !s.grade);
@@ -249,6 +269,53 @@ export default function Home() {
         setErrorMessage(
           `Please select both subject and grade for all entries in Sitting ${i + 1}.`
         );
+        window.scrollTo({ top: 350, behavior: "smooth" });
+        return;
+      }
+    }
+
+    // 4. Validate mandatory English Language and Mathematics across all sittings
+    const allChosenSubjects = sittings.flatMap((sit) =>
+      sit.subjects.map((s) => s.subject.trim().toLowerCase())
+    );
+    const hasEnglish = allChosenSubjects.includes("english language");
+    const hasMaths = allChosenSubjects.includes("mathematics");
+
+    if (!hasEnglish && !hasMaths) {
+      setErrorMessage(
+        "Both English Language and Mathematics are mandatory qualifying subjects and must be included in your O'Level sittings."
+      );
+      window.scrollTo({ top: 350, behavior: "smooth" });
+      return;
+    }
+    if (!hasEnglish) {
+      setErrorMessage(
+        "English Language is a mandatory qualifying subject and must be included in your O'Level sittings."
+      );
+      window.scrollTo({ top: 350, behavior: "smooth" });
+      return;
+    }
+    if (!hasMaths) {
+      setErrorMessage(
+        "Mathematics is a mandatory qualifying subject and must be included in your O'Level sittings."
+      );
+      window.scrollTo({ top: 350, behavior: "smooth" });
+      return;
+    }
+
+    // 5. Validate duplicate sitting exams
+    if (sittings.length === 2) {
+      const sit1 = sittings[0];
+      const sit2 = sittings[1];
+      if (
+        sit1.oLevelRegistrationNumber.trim().toLowerCase() ===
+          sit2.oLevelRegistrationNumber.trim().toLowerCase() &&
+        sit1.exam.trim().toLowerCase() === sit2.exam.trim().toLowerCase()
+      ) {
+        setErrorMessage(
+          "Sitting 1 and Sitting 2 cannot use the same exam body and registration number."
+        );
+        window.scrollTo({ top: 350, behavior: "smooth" });
         return;
       }
     }
@@ -258,7 +325,7 @@ export default function Home() {
     try {
       const payload = {
         jambNumber: jambNumber.trim().toUpperCase(),
-        jambScore: Number(jambScore),
+        jambScore: score,
         surname: surname.trim().toUpperCase(),
         otherNames: otherNames.trim().toUpperCase(),
         email: email.trim().toLowerCase(),
@@ -279,6 +346,9 @@ export default function Home() {
         setErrorMessage(
           data.error || "Unable to verify submission. Please check your data."
         );
+        if (data.isDuplicate && data.existingOffer) {
+          setDuplicateOffer(data.existingOffer);
+        }
         window.scrollTo({ top: 350, behavior: "smooth" });
         return;
       }
@@ -448,8 +518,35 @@ export default function Home() {
             {errorMessage && (
               <div className="form-error-banner" role="alert">
                 <AlertCircle size={18} className="banner-alert-icon" />
-                <div>
+                <div style={{ flex: 1 }}>
                   <strong>Verification Error:</strong> {errorMessage}
+                  {duplicateOffer && (
+                    <div style={{ marginTop: "10px", paddingTop: "8px", borderTop: "1px solid rgba(180, 64, 58, 0.2)" }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdmissionOffer(duplicateOffer);
+                          setDialogOpen(true);
+                        }}
+                        style={{
+                          background: "#ffffff",
+                          border: "1.5px solid #b4403a",
+                          color: "#b4403a",
+                          padding: "6px 14px",
+                          borderRadius: "8px",
+                          fontSize: "13px",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <Printer size={14} />
+                        <span>View Existing Admission Letter ({duplicateOffer.referenceNumber})</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
