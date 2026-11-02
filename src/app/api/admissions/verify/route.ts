@@ -12,8 +12,7 @@ const sittingSchema = z.object({
   oLevelRegistrationNumber: z
     .string()
     .trim()
-    .min(6, "O'Level registration number must be at least 6 characters")
-    .max(12, "O'Level registration number cannot exceed 12 characters (e.g. 10 digits for WAEC/NECO)")
+    .min(5, "O'Level registration number must be at least 5 characters")
     .regex(/^[a-zA-Z0-9]+$/, "O'Level registration number must contain only letters and numbers"),
   exam: z.string().min(1, "Exam body is required"),
   year: z.string().min(4, "Exam year is required"),
@@ -34,8 +33,7 @@ const verifySubmissionSchema = z
     jambNumber: z
       .string()
       .trim()
-      .min(10, "JAMB registration number must be at least 10 characters (e.g. 12345678AB or 2026123456AB)")
-      .max(12, "JAMB registration number cannot exceed 12 characters")
+      .min(5, "JAMB registration number must be at least 5 characters")
       .regex(
         /^[a-zA-Z0-9]+$/,
         "JAMB registration number must contain only letters and numbers"

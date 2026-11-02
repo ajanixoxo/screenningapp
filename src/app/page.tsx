@@ -365,21 +365,19 @@ export default function Home() {
       }
     }
 
-    // 6. Validate Registration Numbers Length Limits
+    // 6. Validate Registration Numbers
     const cleanJamb = jambNumber.trim().toUpperCase();
-    if (cleanJamb.length < 10 || cleanJamb.length > 12) {
-      setErrorMessage(
-        "JAMB registration number must be between 10 and 12 characters (e.g. 12345678AB or 2026123456AB)."
-      );
+    if (cleanJamb.length < 5) {
+      setErrorMessage("Please enter a valid JAMB registration number.");
       window.scrollTo({ top: 350, behavior: "smooth" });
       return;
     }
 
     for (let i = 0; i < sittings.length; i++) {
       const cleanOLevel = sittings[i].oLevelRegistrationNumber.trim().toUpperCase();
-      if (cleanOLevel.length < 6 || cleanOLevel.length > 12) {
+      if (cleanOLevel.length < 5) {
         setErrorMessage(
-          `Sitting ${i + 1} O'Level registration number must be between 6 and 12 characters (e.g. 10 digits for WAEC/NECO).`
+          `Please enter a valid O'Level registration number for Sitting ${i + 1}.`
         );
         window.scrollTo({ top: 350, behavior: "smooth" });
         return;
@@ -636,18 +634,10 @@ export default function Home() {
                     <input
                       name="jambNumber"
                       type="text"
-                      maxLength={12}
                       placeholder="e.g. 202612345678AB"
                       autoComplete="off"
                       value={jambNumber}
-                      onChange={(e) =>
-                        setJambNumber(
-                          e.target.value
-                            .toUpperCase()
-                            .replace(/[^A-Z0-9]/g, "")
-                            .slice(0, 12)
-                        )
-                      }
+                      onChange={(e) => setJambNumber(e.target.value.toUpperCase().trim())}
                       required
                     />
                     <small>Enter the official registration number on your JAMB slip.</small>
@@ -812,16 +802,12 @@ export default function Home() {
                           <input
                             name={`oLevelRegistrationNumber-${sitting.id}`}
                             type="text"
-                            maxLength={12}
                             value={sitting.oLevelRegistrationNumber}
                             onChange={(event) =>
                               updateSitting(
                                 sitting.id,
                                 "oLevelRegistrationNumber",
-                                event.target.value
-                                  .toUpperCase()
-                                  .replace(/[^A-Z0-9]/g, "")
-                                  .slice(0, 12),
+                                event.target.value.toUpperCase().trim(),
                               )
                             }
                             placeholder="e.g. 4251029410"
